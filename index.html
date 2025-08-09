@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drug Mechanism Animator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            font-size: 2.5rem;
+        }
+
+        .drug-selector {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .drug-btn {
+            padding: 12px 24px;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .drug-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+        }
+
+        .drug-btn.active {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .animation-container {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+
+        .animation-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .drug-title {
+            font-size: 1.5rem;
+            color: #2c3e50;
+            font-weight: 700;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .control-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .play-pause {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .reset-btn {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .speed-control {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .speed-slider {
+            width: 80px;
+        }
+
+        .animation-svg {
+            width: 100%;
+            height: 450px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            background: linear-gradient(45deg, #f8f9fa 0%, #e9ecef 100%);
+        }
+
+        .subtitle-container {
+            background: #f8f9fa;
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .subtitle-text {
+            font-size: 1.1rem;
+            color: #495057;
+            font-weight: 600;
+            text-align: center;
+            line-height: 1.4;
+        }
+
+        .subtitle-highlight {
+            color: #2c3e50;
+            background: #fff3cd;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 700;
+        }
+
+        .description {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #4CAF50;
+        }
+
+        .description h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .legend {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 5px 10px;
+            background: rgba(255,255,255,0.8);
+            border-radius: 15px;
+            border: 1px solid #dee2e6;
+        }
+
+        .legend-shape {
+            width: 20px;
+            height: 20px;
+        }
+
+        .legend-circle {
+            border-radius: 50%;
+            border: 2px solid #333;
+        }
+
+        .legend-square {
+            border: 2px solid #333;
+        }
+
+        .legend-diamond {
+            transform: rotate(45deg);
+            border: 2px solid #333;
+        }
+
+        /* Enhanced molecule styles */
+        .drug-molecule {
+            fill: #4CAF50;
+            stroke: #2E7D32;
+            stroke-width: 2;
+            filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.2));
+        }
+
+        .target-molecule {
+            fill: #2196F3;
+            stroke: #1565C0;
+            stroke-width: 2;
+            filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.2));
+        }
+
+        .substrate {
+            fill: #FF9800;
+            stroke: #F57C00;
+            stroke-width: 2;
+            filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.2));
+        }
+
+        .product {
+            fill: #9C27B0;
+            stroke: #7B1FA2;
+            stroke-width: 2;
+            filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.2));
+        }
+
+        .enzyme {
+            fill: #607D8B;
+            stroke: #37474F;
+            stroke-width: 2;
+            filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.2));
+        }
+
+        .neurotransmitter {
+            fill: #E91E63;
+            stroke: #AD1457;
+            stroke-width: 2;
+            filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.2));
+        }
+
+        .receptor {
+            fill: #795548;
+            stroke: #5D4037;
+            stroke-width: 2;
+            filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.2));
+        }
+
+        .blood-vessel {
+            fill: #ffebee;
+            stroke: #e57373;
+            stroke-width: 3;
+            filter: drop-shadow(1px 1px 3px rgba(0,0,0,0.1));
+        }
+
+        .organ {
+            filter: drop-shadow(3px 3px 6px rgba(0,0,0,0.3));
+        }
+
+        /* Animation effects */
+        .pulse {
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .shake {
+            animation: shake 0.5s ease-in-out infinite;
+        }
+
+        .glow {
+            filter: drop-shadow(0 0 10px currentColor);
+        }
+
+        .blocked {
+            opacity: 0.3;
+            filter: grayscale(50%);
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-2px); }
+            75% { transform: translateX(2px); }
+        }
+
+        @keyframes fadeInOut {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        .fade-pulse {
+            animation: fadeInOut 2s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧬 Drug Mechanism Animator</h1>
+        
+        <div class="drug-selector">
+            <button class="drug-btn active" onclick="selectDrug('ace')">ACE Inhibitors</button>
+            <button class="drug-btn" onclick="selectDrug('ssri')">SSRI Antidepressants</button>
+            <button class="drug-btn" onclick="selectDrug('warfarin')">Warfarin</button>
+        </div>
+
+        <div class="animation-container">
+            <div class="animation-header">
+                <div class="drug-title" id="drugTitle">ACE Inhibitors</div>
+                <div class="controls">
+                    <button class="control-btn play-pause" onclick="toggleAnimation()" id="playPauseBtn">⏸️ Pause</button>
+                    <button class="control-btn reset-btn" onclick="resetAnimation()">🔄 Reset</button>
+                    <div class="speed-control">
+                        <label>Speed:</label>
+                        <input type="range" class="speed-slider" min="0.5" max="3" step="0.1" value="1" onchange="changeSpeed(this.value)">
+                    </div>
+                </div>
+            </div>
+
+            <svg class="animation-svg" id="animationSvg" viewBox="0 0 800 450">
+                <!-- ACE Inhibitor Animation -->
+                <g id="aceAnimation">
+                    <!-- Background elements -->
+                    <defs>
+                        <linearGradient id="vesselGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" style="stop-color:#ffcdd2;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#ffebee;stop-opacity:1" />
+                        </linearGradient>
+                        <linearGradient id="kidneyGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" style="stop-color:#a1887f;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#8d6e63;stop-opacity:1" />
+                        </linearGradient>
+                    </defs>
+                    
+                    <!-- Blood vessel with flow lines -->
+                    <rect x="50" y="60" width="700" height="80" fill="url(#vesselGradient)" stroke="#e57373" stroke-width="3" rx="40" class="blood-vessel"/>
+                    <text x="400" y="105" text-anchor="middle" fill="#c62828" font-weight="bold" font-size="14">Blood Vessel</text>
+                    
+                    <!-- Flow indicators in blood vessel -->
+                    <g id="bloodFlow">
+                        <circle cx="100" cy="100" r="3" fill="#f44336" opacity="0.6"/>
+                        <circle cx="150" cy="100" r="3" fill="#f44336" opacity="0.6"/>
+                        <circle cx="200" cy="100" r="3" fill="#f44336" opacity="0.6"/>
+                        <circle cx="250" cy="100" r="3" fill="#f44336" opacity="0.6"/>
+                    </g>
+                    
+                    <!-- Heart -->
+                    <g class="organ">
+                        <path d="M 700 90 C 710 80, 730 80, 740 90 C 750 80, 770 80, 780 90 C 780 110, 740 130, 740 150 C 740 130, 700 110, 700 90 Z" fill="#e53935" stroke="#c62828" stroke-width="2"/>
+                        <text x="740" y="105" text-anchor="middle" fill="white" font-weight="bold" font-size="12">Heart</text>
+                    </g>
+                    
+                    <!-- Kidney with more detail -->
+                    <g class="organ">
+                        <ellipse cx="150" cy="300" rx="80" ry="60" fill="url(#kidneyGradient)" stroke="#5d4037" stroke-width="3"/>
+                        <ellipse cx="140" cy="295" rx="15" ry="20" fill="#6d4c41" opacity="0.7"/>
+                        <text x="150" y="310" text-anchor="middle" fill="white" font-weight="bold" font-size="14">Kidney</text>
+                    </g>
+                    
+                    <!-- ACE Enzyme with binding site -->
+                    <g id="aceEnzyme" class="enzyme">
+                        <rect x="350" y="180" width="100" height="50" rx="25" fill="#607D8B" stroke="#37474F" stroke-width="3"/>
+                        <rect x="370" y="195" width="20" height="20" rx="10" fill="#455A64" stroke="#263238" stroke-width="1"/>
+                        <text x="400" y="210" text-anchor="middle" fill="white" font-size="12" font-weight="bold">ACE Enzyme</text>
+                        <text x="380" y="250" text-anchor="middle" fill="#37474F" font-size="10">Binding Site</text>
+                    </g>
+                    
+                    <!-- Angiotensin I with molecular structure -->
+                    <g id="angiotensinI" class="substrate">
+                        <circle cx="250" cy="200" r="18" fill="#FF9800" stroke="#F57C00" stroke-width="3"/>
+                        <circle cx="245" cy="195" r="4" fill="#FFB74D" opacity="0.8"/>
+                        <circle cx="255" cy="205" r="4" fill="#FFB74D" opacity="0.8"/>
+                        <text x="250" y="245" text-anchor="middle" fill="#E65100" font-size="12" font-weight="bold">Angiotensin I</text>
+                        <text x="250" y="258" text-anchor="middle" fill="#E65100" font-size="10">(Substrate)</text>
+                    </g>
+                    
+                    <!-- ACE Inhibitor Drug with distinctive shape -->
+                    <g id="aceInhibitor" class="drug-molecule">
+                        <polygon points="520,160 540,140 560,160 540,180" fill="#4CAF50" stroke="#2E7D32" stroke-width="3"/>
+                        <circle cx="540" cy="160" r="6" fill="#66BB6A"/>
+                        <text x="540" y="200" text-anchor="middle" fill="#1B5E20" font-size="12" font-weight="bold">ACE Inhibitor</text>
+                        <text x="540" y="213" text-anchor="middle" fill="#1B5E20" font-size="10">(Drug)</text>
+                    </g>
+                    
+                    <!-- Angiotensin II (normally produced, but blocked) -->
+                    <g id="angiotensinII" class="product blocked">
+                        <circle cx="550" cy="280" r="15" fill="#9C27B0" stroke="#7B1FA2" stroke-width="3"/>
+                        <circle cx="545" cy="275" r="3" fill="#BA68C8" opacity="0.8"/>
+                        <circle cx="555" cy="285" r="3" fill="#BA68C8" opacity="0.8"/>
+                        <text x="550" y="320" text-anchor="middle" fill="#4A148C" font-size="12" font-weight="bold">Angiotensin II</text>
+                        <text x="550" y="333" text-anchor="middle" fill="#4A148C" font-size="10">(Blocked)</text>
+                        <!-- Blocking X -->
+                        <line x1="535" y1="265" x2="565" y2="295" stroke="red" stroke-width="4"/>
+                        <line x1="565" y1="265" x2="535" y2="295" stroke="red" stroke-width="4"/>
+                    </g>
+                    
+                    <!-- Blood pressure indicator with gauge -->
+                    <g id="bpIndicator">
+                        <rect x="600" y="200" width="140" height="40" fill="#c8e6c9" stroke="#4CAF50" stroke-width="3" rx="20"/>
+                        <text x="670" y="225" text-anchor="middle" fill="#2E7D32" font-weight="bold" font-size="14">⬇️ Blood Pressure</text>
+                        <!-- Simple gauge -->
+                        <rect x="610" y="210" width="8" height="20" fill="#4CAF50" rx="2"/>
+                        <rect x="622" y="215" width="8" height="10" fill="#81C784" rx="2"/>
+                        <rect x="634" y="218" width="8" height="4" fill="#A5D6A7" rx="2"/>
+                    </g>
+                    
+                    <!-- Arrows showing pathway -->
+                    <path d="M 268 200 Q 300 190 340 200" stroke="#666" stroke-width="2" fill="none" marker-end="url(#arrowhead)" id="pathway1"/>
+                    <path d="M 450 200 Q 480 220 520 240" stroke="#ff5722" stroke-width="2" fill="none" stroke-dasharray="5,5" id="blockedPathway"/>
+                </g>
+
+                <!-- SSRI Animation -->
+                <g id="ssriAnimation" style="display: none;">
+                    <defs>
+                        <linearGradient id="neuronGradient1" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" style="stop-color:#e3f2fd;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#bbdefb;stop-opacity:1" />
+                        </linearGradient>
+                        <linearGradient id="neuronGradient2" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" style="stop-color:#e8f5e8;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#c8e6c8;stop-opacity:1" />
+                        </linearGradient>
+                        <linearGradient id="synapseGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" style="stop-color:#fff3e0;stop-opacity:1" />
+                            <stop offset="50%" style="stop-color:#ffe0b2;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#fff3e0;stop-opacity:1" />
+                        </linearGradient>
+                    </defs>
+                    
+                    <!-- Presynaptic neuron with axon terminal -->
+                    <g class="organ">
+                        <ellipse cx="150" cy="150" rx="120" ry="80" fill="url(#neuronGradient1)" stroke="#1976d2" stroke-width="4"/>
+                        <ellipse cx="130" cy="140" rx="30" ry="20" fill="#90caf9" opacity="0.7"/>
+                        <text x="150" y="145" text-anchor="middle" fill="#0d47a1" font-weight="bold" font-size="14">Presynaptic</text>
+                        <text x="150" y="160" text-anchor="middle" fill="#0d47a1" font-weight="bold" font-size="14">Neuron</text>
+                        
+                        <!-- Axon terminal -->
+                        <ellipse cx="250" cy="150" rx="25" ry="40" fill="#64b5f6" stroke="#1976d2" stroke-width="2"/>
+                        <text x="250" y="110" text-anchor="middle" fill="#0d47a1" font-size="10" font-weight="bold">Axon Terminal</text>
+                    </g>
+                    
+                    <!-- Synaptic cleft with detailed structure -->
+                    <rect x="275" y="110" width="50" height="180" fill="url(#synapseGradient)" stroke="#f57c00" stroke-width="3" rx="5"/>
+                    <text x="300" y="130" text-anchor="middle" fill="#e65100" font-size="12" font-weight="bold">Synaptic</text>
+                    <text x="300" y="145" text-anchor="middle" fill="#e65100" font-size="12" font-weight="bold">Cleft</text>
+                    
+                    <!-- Postsynaptic neuron with receptors -->
+                    <g class="organ">
+                        <ellipse cx="450" cy="200" rx="120" ry="100" fill="url(#neuronGradient2)" stroke="#4caf50" stroke-width="4"/>
+                        <ellipse cx="470" cy="190" rx="30" ry="20" fill="#a5d6a7" opacity="0.7"/>
+                        <text x="450" y="195" text-anchor="middle" fill="#2e7d32" font-weight="bold" font-size="14">Postsynaptic</text>
+                        <text x="450" y="210" text-anchor="middle" fill="#2e7d32" font-weight="bold" font-size="14">Neuron</text>
+                        
+                        <!-- Serotonin receptors -->
+                        <g class="receptor">
+                            <rect x="320" y="160" width="12" height="25" rx="6" fill="#795548" stroke="#5d4037" stroke-width="1"/>
+                            <rect x="320" y="200" width="12" height="25" rx="6" fill="#795548" stroke="#5d4037" stroke-width="1"/>
+                            <rect x="320" y="240" width="12" height="25" rx="6" fill="#795548" stroke="#5d4037" stroke-width="1"/>
+                        </g>
+                        <text x="338" y="175" fill="#5d4037" font-size="8">5-HT</text>
+                        <text x="338" y="215" fill="#5d4037" font-size="8">5-HT</text>
+                        <text x="338" y="255" fill="#5d4037" font-size="8">5-HT</text>
+                    </g>
+                    
+                    <!-- Serotonin molecules with distinctive shape -->
+                    <g id="serotonin1" class="neurotransmitter">
+                        <circle cx="285" cy="170" r="10" fill="#e91e63" stroke="#ad1457" stroke-width="2"/>
+                        <circle cx="280" cy="165" r="3" fill="#f48fb1" opacity="0.8"/>
+                        <circle cx="290" cy="175" r="3" fill="#f48fb1" opacity="0.8"/>
+                        <text x="285" y="155" text-anchor="middle" fill="#880e4f" font-size="9" font-weight="bold">5-HT</text>
+                    </g>
+                    <g id="serotonin2" class="neurotransmitter">
+                        <circle cx="300" cy="200" r="10" fill="#e91e63" stroke="#ad1457" stroke-width="2"/>
+                        <circle cx="295" cy="195" r="3" fill="#f48fb1" opacity="0.8"/>
+                        <circle cx="305" cy="205" r="3" fill="#f48fb1" opacity="0.8"/>
+                        <text x="300" y="185" text-anchor="middle" fill="#880e4f" font-size="9" font-weight="bold">5-HT</text>
+                    </g>
+                    <g id="serotonin3" class="neurotransmitter">
+                        <circle cx="290" cy="240" r="10" fill="#e91e63" stroke="#ad1457" stroke-width="2"/>
+                        <circle cx="285" cy="235" r="3" fill="#f48fb1" opacity="0.8"/>
+                        <circle cx="295" cy="245" r="3" fill="#f48fb1" opacity="0.8"/>
+                        <text x="290" y="225" text-anchor="middle" fill="#880e4f" font-size="9" font-weight="bold">5-HT</text>
+                    </g>
+                    
+                    <!-- Serotonin reuptake transporter (SERT) -->
+                    <g id="sert" class="target-molecule">
+                        <rect x="260" y="180" width="15" height="40" rx="7" fill="#2196f3" stroke="#1565c0" stroke-width="2"/>
+                        <rect x="263" y="190" width="9" height="8" rx="4" fill="#64b5f6" opacity="0.8"/>
+                        <text x="267" y="240" text-anchor="middle" fill="#0d47a1" font-size="10" font-weight="bold">SERT</text>
+                        <text x="267" y="252" text-anchor="middle" fill="#0d47a1" font-size="8">Transporter</text>
+                    </g>
+                    
+                    <!-- SSRI Drug with hexagonal structure -->
+                    <g id="ssriDrug" class="drug-molecule">
+                        <polygon points="180,300 195,285 215,285 230,300 215,315 195,315" fill="#4caf50" stroke="#2e7d32" stroke-width="3"/>
+                        <circle cx="205" cy="300" r="8" fill="#66bb6a"/>
+                        <text x="205" y="340" text-anchor="middle" fill="#1b5e20" font-size="12" font-weight="bold">SSRI</text>
+                        <text x="205" y="353" text-anchor="middle" fill="#1b5e20" font-size="10">(Fluoxetine)</text>
+                    </g>
+                    
+                    <!-- Mood/Brain indicator -->
+                    <g id="moodIndicator">
+                        <ellipse cx="600" cy="150" rx="80" ry="60" fill="#fff9c4" stroke="#fbc02d" stroke-width="3"/>
+                        <circle cx="580" cy="135" r="8" fill="#4caf50"/>
+                        <circle cx="620" cy="135" r="8" fill="#4caf50"/>
+                        <path d="M 570 165 Q 600 185 630 165" stroke="#4caf50" stroke-width="4" fill="none"/>
+                        <text x="600" y="190" text-anchor="middle" fill="#f57f17" font-weight="bold" font-size="14">Improved Mood</text>
+                    </g>
+                    
+                    <!-- Arrows showing serotonin pathway -->
+                    <path d="M 275 190 L 320 190" stroke="#e91e63" stroke-width="2" fill="none" marker-end="url(#arrowhead)" id="serotoninPath1"/>
+                    <path d="M 275 220 L 320 220" stroke="#e91e63" stroke-width="2" fill="none" marker-end="url(#arrowhead)" id="serotoninPath2"/>
+                </g>
+
+                <!-- Warfarin Animation -->
+                <g id="warfarinAnimation" style="display: none;">
+                    <defs>
+                        <linearGradient id="liverGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" style="stop-color:#a1887f;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#8d6e63;stop-opacity:1" />
+                        </linearGradient>
+                    </defs>
+                    
+                    <!-- Liver with detailed structure -->
+                    <g class="organ">
+                        <ellipse cx="200" cy="200" rx="100" ry="70" fill="url(#liverGradient)" stroke="#5d4037" stroke-width="4"/>
+                        <ellipse cx="180" cy="185" rx="25" ry="20" fill="#6d4c41" opacity="0.7"/>
+                        <ellipse cx="220" cy="215" rx="20" ry="15" fill="#6d4c41" opacity="0.7"/>
+                        <text x="200" y="200" text-anchor="middle" fill="white" font-weight="bold" font-size="16">Liver</text>
+                        <text x="200" y="217" text-anchor="middle" fill="white" font-size="10">(Hepatocyte)</text>
+                    </g>
+                    
+                    <!-- Vitamin K with molecular representation -->
+                    <g id="vitaminK" class="substrate">
+                        <circle cx="350" cy="150" r="18" fill="#ff9800" stroke="#f57c00" stroke-width="3"/>
+                        <path d="M 340 145 L 360 155" stroke="#ffb74d" stroke-width="3"/>
+                        <path d="M 340 155 L 360 145" stroke="#ffb74d" stroke-width="3"/>
+                        <text x="350" y="130" text-anchor="middle" fill="#e65100" font-size="12" font-weight="bold">Vitamin K</text>
+                        <text x="350" y="185" text-anchor="middle" fill="#e65100" font-size="10">(Cofactor)</text>
+                    </g>
+                    
+                    <!-- Vitamin K Epoxide Reductase (VKOR) -->
+                    <g id="vkor" class="enzyme">
+                        <rect x="420" y="180" width="90" height="50" rx="25" fill="#607d8b" stroke="#37474f" stroke-width="3"/>
+                        <ellipse cx="445" cy="205" rx="8" ry="12" fill="#546e7a" opacity="0.8"/>
+                        <ellipse cx="485" cy="205" rx="8" ry="12" fill="#546e7a" opacity="0.8"/>
+                        <text x="465" y="200" text-anchor="middle" fill="white" font-size="11" font-weight="bold">VKOR</text>
+                        <text x="465" y="215" text-anchor="middle" fill="white" font-size="11" font-weight="bold">Enzyme</text>
+                        <text x="465" y="250" text-anchor="middle" fill="#37474f" font-size="9">Vitamin K Cycle</text>
+                    </g>
+                    
+                    <!-- Warfarin with coumarin structure -->
+                    <g id="warfarin" class="drug-molecule">
+                        <polygon points="550,160 570,140 590,160 570,180" fill="#4caf50" stroke="#2e7d32" stroke-width="3"/>
+                        <circle cx="560" cy="150" r="4" fill="#66bb6a"/>
+                        <circle cx="580" cy="170" r="4" fill="#66bb6a"/>
+                        <text x="570" y="200" text-anchor="middle" fill="#1b5e20" font-size="12" font-weight="bold">Warfarin</text>
+                        <text x="570" y="213" text-anchor="middle" fill="#1b5e20" font-size="10">(Coumadin)</text>
+                    </g>
+                    
+                    <!-- Vitamin K Epoxide (intermediate) -->
+                    <g id="vitaminKEpoxide" class="substrate" style="opacity: 0.6;">
+                        <circle cx="390" cy="280" r="15" fill="#ff9800" stroke="#f57c00" stroke-width="2"/>
+                        <circle cx="385" cy="275" r="3" fill="#ffb74d" opacity="0.8"/>
+                        <text x="390" y="305" text-anchor="middle" fill="#e65100" font-size="10">Vitamin K</text>
+                        <text x="390" y="318" text-anchor="middle" fill="#e65100" font-size="10">Epoxide</text>
+                    </g>
+                    
+                    <!-- Clotting factors (blocked) -->
+                    <g id="clottingFactors" class="product blocked">
+                        <rect x="600" y="180" width="70" height="40" rx="20" fill="#9c27b0" stroke="#7b1fa2" stroke-width="3"/>
+                        <text x="635" y="195" text-anchor="middle" fill="white" font-size="10" font-weight="bold">Clotting</text>
+                        <text x="635" y="210" text-anchor="middle" fill="white" font-size="10" font-weight="bold">Factors</text>
+                        <text x="635" y="225" text-anchor="middle" fill="white" font-size="8">(II, VII, IX, X)</text>
+                        <!-- Blocking X -->
+                        <line x1="585" y1="165" x2="685" y2="235" stroke="red" stroke-width="4"/>
+                        <line x1="685" y1="165" x2="585" y2="235" stroke="red" stroke-width="4"/>
+                    </g>
+                    
+                    <!-- Blood clot prevention indicator -->
+                    <g id="clotIndicator">
+                        <ellipse cx="650" cy="300" rx="80" ry="40" fill="#c8e6c9" stroke="#4CAF50" stroke-width="3"/>
+                        <text x="650" y="295" text-anchor="middle" fill="#2E7D32" font-weight="bold" font-size="14">⬇️ Blood Clots</text>
+                        <text x="650" y="310" text-anchor="middle" fill="#2E7D32" font-size="12">Prevented</text>
+                        
+                        <!-- Blood drops -->
+                        <circle cx="620" cy="280" r="4" fill="#f44336"/>
+                        <circle cx="635" cy="275" r="4" fill="#f44336"/>
+                        <circle cx="665" cy="275" r="4" fill="#f44336"/>
+                        <circle cx="680" cy="280" r="4" fill="#f44336"/>
+                    </g>
+                    
+                    <!-- Pathway arrows -->
+                    <path d="M 368 160 Q 390 170 415 190" stroke="#ff9800" stroke-width="2" fill="none" marker-end="url(#arrowhead)" id="vitKPath"/>
+                    <path d="M 510 200 Q 540 210 575 200" stroke="#ff5722" stroke-width="2" fill="none" stroke-dasharray="5,5" id="blockedClotPath"/>
+                </g>
+
+                <!-- Arrow markers -->
+                <defs>
+                    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                        <polygon points="0 0, 10 3.5, 0 7" fill="#666"/>
+                    </marker>
+                </defs>
+            </svg>
+
+            <!-- Live subtitles showing what's happening -->
+            <div class="subtitle-container">
+                <div class="subtitle-text" id="subtitleText">
+                    Watch as <span class="subtitle-highlight">Angiotensin I</span> approaches the <span class="subtitle-highlight">ACE enzyme</span> for conversion...
+                </div>
+            </div>
+
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-shape legend-diamond drug-molecule"></div>
+                    <span>Drug Molecule</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-shape legend-square target-molecule"></div>
+                    <span>Target/Enzyme</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-shape legend-circle substrate"></div>
+                    <span>Substrate</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-shape legend-circle product"></div>
+                    <span>Product (Blocked)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-shape legend-circle neurotransmitter"></div>
+                    <span>Neurotransmitter</span>
+                </div>
+            </div>
+
+            <div class="description" id="drugDescription">
+                <h3>ACE Inhibitors - Mechanism of Action</h3>
+                <p><strong>Target:</strong> Angiotensin-Converting Enzyme (ACE)</p>
+                <p><strong>Mechanism:</strong> ACE inhibitors block the conversion of Angiotensin I to Angiotensin II by competitively binding to the ACE enzyme's active site. This prevents vasoconstriction and reduces aldosterone release, leading to decreased blood pressure and reduced cardiac workload.</p>
+                <p><strong>Clinical Use:</strong> Hypertension, heart failure, diabetic nephropathy, post-myocardial infarction</p>
+                <p><strong>Examples:</strong> Lisinopril, Enalapril, Captopril, Ramipril</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentDrug = 'ace';
+        let isPlaying = true;
+        let animationSpeed = 1;
+        let animations = {};
+        let currentStep = 0;
+
+        const drugData = {
+            ace: {
+                title: 'ACE Inhibitors',
+                description: {
+                    title: 'ACE Inhibitors - Mechanism of Action',
+                    target: 'Angiotensin-Converting Enzyme (ACE)',
+                    mechanism: 'ACE inhibitors block the conversion of Angiotensin I to Angiotensin II by competitively binding to the ACE enzyme\'s active site. This prevents vasoconstriction and reduces aldosterone release, leading to decreased blood pressure and reduced cardiac workload.',
+                    clinical: 'Hypertension, heart failure, diabetic nephropathy, post-myocardial infarction',
+                    examples: 'Lisinopril, Enalapril, Captopril, Ramipril'
+                },
+                subtitles: [
+                    'Watch as <span class="subtitle-highlight">Angiotensin I</span> approaches the <span class="subtitle-highlight">ACE enzyme</span> for conversion...',
+                    '<span class="subtitle-highlight">Angiotensin I</span> moves toward the ACE enzyme in the blood vessel',
+                    'The <span class="subtitle-highlight">ACE inhibitor drug</span> rapidly approaches the enzyme',
+                    '<span class="subtitle-highlight">ACE inhibitor</span> binds to the enzyme\'s active site, blocking it',
+                    '<span class="subtitle-highlight">Angiotensin I</span> cannot be converted - it bounces away!',
+                    'Without Angiotensin II production, <span class="subtitle-highlight">blood pressure decreases</span>',
+                    'The cycle continues - ACE remains blocked by the drug'
+                ]
+            },
+            ssri: {
+                title: 'SSRI Antidepressants',
+                description: {
+                    title: 'SSRI Antidepressants - Mechanism of Action',
+                    target: 'Serotonin Reuptake Transporter (SERT)',
+                    mechanism: 'SSRIs selectively block the reuptake of serotonin by inhibiting the SERT transporter. This increases serotonin concentration in the synaptic cleft, enhancing serotonergic neurotransmission and gradually improving mood and emotional regulation.',
+                    clinical: 'Major depressive disorder, generalized anxiety disorder, panic disorder, OCD, PTSD',
+                    examples: 'Fluoxetine (Prozac), Sertraline (Zoloft), Citalopram (Celexa), Paroxetine (Paxil)'
+                },
+                subtitles: [
+                    'A nerve impulse causes <span class="subtitle-highlight">serotonin release</span> into the synapse...',
+                    '<span class="subtitle-highlight">Serotonin molecules</span> are released from the presynaptic neuron',
+                    'Serotonin travels across the <span class="subtitle-highlight">synaptic cleft</span>',
+                    'Some serotonin binds to <span class="subtitle-highlight">postsynaptic receptors</span>',
+                    'The <span class="subtitle-highlight">SSRI drug</span> moves toward the reuptake transporter',
+                    '<span class="subtitle-highlight">SSRI blocks SERT</span> - preventing serotonin reuptake!',
+                    'More <span class="subtitle-highlight">serotonin remains active</span> in the synapse',
+                    'Enhanced serotonin signaling leads to <span class="subtitle-highlight">improved mood</span>'
+                ]
+            },
+            warfarin: {
+                title: 'Warfarin',
+                description: {
+                    title: 'Warfarin - Mechanism of Action',
+                    target: 'Vitamin K Epoxide Reductase (VKOR)',
+                    mechanism: 'Warfarin inhibits vitamin K epoxide reductase, disrupting the vitamin K cycle. This prevents the synthesis of functional vitamin K-dependent clotting factors (II, VII, IX, X), effectively reducing the blood\'s coagulation potential.',
+                    clinical: 'Atrial fibrillation, deep vein thrombosis, pulmonary embolism, mechanical heart valves',
+                    examples: 'Warfarin sodium (Coumadin, Jantoven)'
+                },
+                subtitles: [
+                    '<span class="subtitle-highlight">Vitamin K</span> normally helps produce clotting factors...',
+                    '<span class="subtitle-highlight">Vitamin K</span> approaches the VKOR enzyme in liver cells',
+                    'VKOR enzyme normally <span class="subtitle-highlight">recycles vitamin K</span> for clotting factor synthesis',
+                    '<span class="subtitle-highlight">Warfarin drug</span> moves toward the VKOR enzyme',
+                    '<span class="subtitle-highlight">Warfarin binds to VKOR</span>, blocking vitamin K recycling',
+                    'Without active vitamin K, <span class="subtitle-highlight">clotting factors cannot be made</span>',
+                    'Blood clotting ability is <span class="subtitle-highlight">safely reduced</span>',
+                    'Warfarin continues blocking the vitamin K cycle'
+                ]
+            }
+        };
+
+        function selectDrug(drug) {
+            // Update active button
+            document.querySelectorAll('.drug-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Hide all animations
+            document.querySelectorAll('[id$="Animation"]').forEach(anim => {
+                anim.style.display = 'none';
+            });
+            
+            // Show selected animation
+            document.getElementById(drug + 'Animation').style.display = 'block';
+            
+            // Update title and description
+            const data = drugData[drug];
+            document.getElementById('drugTitle').textContent = data.title;
+            document.getElementById('drugDescription').innerHTML = `
+                <h3>${data.description.title}</h3>
+                <p><strong>Target:</strong> ${data.description.target}</p>
+                <p><strong>Mechanism:</strong> ${data.description.mechanism}</p>
+                <p><strong>Clinical Use:</strong> ${data.description.clinical}</p>
+                <p><strong>Examples:</strong> ${data.description.examples}</p>
+            `;
+            
+            currentDrug = drug;
+            currentStep = 0;
+            resetAnimation();
+            updateSubtitle();
+            startAnimations();
+        }
+
+        function updateSubtitle() {
+            const subtitles = drugData[currentDrug].subtitles;
+            const subtitleElement = document.getElementById('subtitleText');
+            subtitleElement.innerHTML = subtitles[currentStep % subtitles.length];
+        }
+
+        function toggleAnimation() {
+            isPlaying = !isPlaying;
+            const btn = document.getElementById('playPauseBtn');
+            
+            if (isPlaying) {
+                btn.textContent = '⏸️ Pause';
+                startAnimations();
+            } else {
+                btn.textContent = '▶️ Play';
+                stopAnimations();
+            }
+        }
+
+        function resetAnimation() {
+            stopAnimations();
+            currentStep = 0;
+            resetPositions();
+            updateSubtitle();
+            if (isPlaying) {
+                setTimeout(startAnimations, 500);
+            }
+        }
+
+        function changeSpeed(speed) {
+            animationSpeed = parseFloat(speed);
+            if (isPlaying) {
+                stopAnimations();
+                startAnimations();
+            }
+        }
+
+        function startAnimations() {
+            if (!isPlaying) return;
+            
+            stopAnimations();
+            
+            if (currentDrug === 'ace') {
+                startACEAnimation();
+            } else if (currentDrug === 'ssri') {
+                startSSRIAnimation();
+            } else if (currentDrug === 'warfarin') {
+                startWarfarinAnimation();
+            }
+        }
+
+        function stopAnimations() {
+            Object.values(animations).forEach(clearInterval);
+            animations = {};
+            
+            // Remove all animation classes
+            document.querySelectorAll('.pulse, .shake, .glow, .fade-pulse').forEach(el => {
+                el.classList.remove('pulse', 'shake', 'glow', 'fade-pulse');
+            });
+        }
+
+        function resetPositions() {
+            // Reset ACE elements
+            const angI = document.getElementById('angiotensinI');
+            if (angI) {
+                angI.querySelector('circle').setAttribute('cx', '250');
+                angI.classList.remove('pulse', 'shake', 'glow');
+            }
+            
+            const inhibitor = document.getElementById('aceInhibitor');
+            if (inhibitor) {
+                const polygon = inhibitor.querySelector('polygon');
+                polygon.setAttribute('points', '520,160 540,140 560,160 540,180');
+                inhibitor.classList.remove('pulse', 'shake', 'glow');
+            }
+            
+            const aceEnzyme = document.getElementById('aceEnzyme');
+            if (aceEnzyme) {
+                aceEnzyme.classList.remove('pulse', 'shake', 'glow');
+            }
+            
+            // Reset SSRI elements
+            const serotonins = ['serotonin1', 'serotonin2', 'serotonin3'];
+            const initialPositions = [
+                {cx: '285', cy: '170'},
+                {cx: '300', cy: '200'},
+                {cx: '290', cy: '240'}
+            ];
+            
+            serotonins.forEach((id, index) => {
+                const el = document.getElementById(id);
+                if (el) {
+                    const circle = el.querySelector('circle');
+                    circle.setAttribute('cx', initialPositions[index].cx);
+                    circle.setAttribute('cy', initialPositions[index].cy);
+                    el.classList.remove('pulse', 'shake', 'glow', 'fade-pulse');
+                }
+            });
+            
+            const ssri = document.getElementById('ssriDrug');
+            if (ssri) {
+                const polygon = ssri.querySelector('polygon');
+                polygon.setAttribute('points', '180,300 195,285 215,285 230,300 215,315 195,315');
+                ssri.classList.remove('pulse', 'shake', 'glow');
+            }
+            
+            // Reset Warfarin elements
+            const vitK = document.getElementById('vitaminK');
+            if (vitK) {
+                vitK.querySelector('circle').setAttribute('cx', '350');
+                vitK.classList.remove('pulse', 'shake', 'glow');
+            }
+            
+            const warfarin = document.getElementById('warfarin');
+            if (warfarin) {
+                const polygon = warfarin.querySelector('polygon');
+                polygon.setAttribute('points', '550,160 570,140 590,160 570,180');
+                warfarin.classList.remove('pulse', 'shake', 'glow');
+            }
+        }
+
+        function startACEAnimation() {
+            let step = 0;
+            animations.ace = setInterval(() => {
+                const angI = document.getElementById('angiotensinI');
+                const inhibitor = document.getElementById('aceInhibitor');
+                const enzyme = document.getElementById('aceEnzyme');
+                
+                // Update subtitle based on step
+                if (step % 120 === 0) currentStep = 0;
+                else if (step % 120 === 20) currentStep = 1;
+                else if (step % 120 === 40) currentStep = 2;
+                else if (step % 120 === 60) currentStep = 3;
+                else if (step % 120 === 80) currentStep = 4;
+                else if (step % 120 === 100) currentStep = 5;
+                
+                updateSubtitle();
+                
+                const cycleStep = step % 120;
+                
+                if (cycleStep < 20) {
+                    // Phase 1: Angiotensin I approaches
+                    const newX = 250 + (cycleStep * 5);
+                    angI.querySelector('circle').setAttribute('cx', newX);
+                    angI.classList.add('pulse');
+                    enzyme.classList.add('glow');
+                } else if (cycleStep < 40) {
+                    // Phase 2: ACE inhibitor approaches
+                    const progress = cycleStep - 20;
+                    const newX = 520 - (progress * 4);
+                    const points = `${newX},160 ${newX+20},140 ${newX+40},160 ${newX+20},180`;
+                    inhibitor.querySelector('polygon').setAttribute('points', points);
+                    inhibitor.classList.add('pulse');
+                } else if (cycleStep < 60) {
+                    // Phase 3: Inhibitor binds, enzyme blocked
+                    enzyme.classList.add('shake');
+                    inhibitor.classList.add('glow');
+                    angI.classList.remove('pulse');
+                } else if (cycleStep < 80) {
+                    // Phase 4: Angiotensin I bounces back
+                    const progress = cycleStep - 60;
+                    const newX = 350 - (progress * 5);
+                    angI.querySelector('circle').setAttribute('cx', newX);
+                    angI.classList.add('shake');
+                } else {
+                    // Phase 5: Reset and show effect
+                    enzyme.classList.remove('shake');
+                    enzyme.classList.add('fade-pulse');
+                    angI.classList.remove('shake');
+                }
+                
+                step++;
+                
+                if (step >= 120) {
+                    step = 0;
+                    resetPositions();
+                }
+            }, 150 / animationSpeed);
+        }
+
+        function startSSRIAnimation() {
+            let step = 0;
+            animations.ssri = setInterval(() => {
+                const serotonins = ['serotonin1', 'serotonin2', 'serotonin3'];
+                const ssri = document.getElementById('ssriDrug');
+                const sert = document.getElementById('sert');
+                
+                // Update subtitle based on step
+                if (step % 160 === 0) currentStep = 0;
+                else if (step % 160 === 20) currentStep = 1;
+                else if (step % 160 === 40) currentStep = 2;
+                else if (step % 160 === 60) currentStep = 3;
+                else if (step % 160 === 80) currentStep = 4;
+                else if (step % 160 === 100) currentStep = 5;
+                else if (step % 160 === 120) currentStep = 6;
+                else if (step % 160 === 140) currentStep = 7;
+                
+                updateSubtitle();
+                
+                const cycleStep = step % 160;
+                
+                if (cycleStep < 40) {
+                    // Phase 1-2: Serotonin release and movement
+                    serotonins.forEach((id, index) => {
+                        const el = document.getElementById(id);
+                        el.classList.add('pulse');
+                        
+                        // Some serotonin moves toward receptors
+                        if (cycleStep > 20) {
+                            const circle = el.querySelector('circle');
+                            const currentX = parseFloat(circle.getAttribute('cx'));
+                            circle.setAttribute('cx', currentX + 0.5);
+                        }
+                    });
+                } else if (cycleStep < 80) {
+                    // Phase 3-4: SSRI approaches SERT
+                    const progress = cycleStep - 40;
+                    const newX = 180 + (progress * 2);
+                    const newY = 300 - (progress * 1.5);
+                    const points = `${newX},${newY} ${newX+15},${newY-15} ${newX+35},${newY-15} ${newX+50},${newY} ${newX+35},${newY+15} ${newX+15},${newY+15}`;
+                    ssri.querySelector('polygon').setAttribute('points', points);
+                    ssri.classList.add('pulse');
+                    sert.classList.add('glow');
+                } else if (cycleStep < 120) {
+                    // Phase 5-6: SSRI blocks SERT, serotonin accumulates
+                    sert.classList.add('shake');
+                    ssri.classList.add('glow');
+                    
+                    serotonins.forEach(id => {
+                        const el = document.getElementById(id);
+                        el.classList.add('fade-pulse');
+                    });
+                } else {
+                    // Phase 7-8: Enhanced mood effects
+                    const moodIndicator = document.getElementById('moodIndicator');
+                    if (moodIndicator) {
+                        moodIndicator.classList.add('pulse');
+                    }
+                }
+                
+                step++;
+                
+                if (step >= 160) {
+                    step = 0;
+                    resetPositions();
+                }
+            }, 125 / animationSpeed);
+        }
+
+        function startWarfarinAnimation() {
+            let step = 0;
+            animations.warfarin = setInterval(() => {
+                const vitK = document.getElementById('vitaminK');
+                const warfarin = document.getElementById('warfarin');
+                const vkor = document.getElementById('vkor');
+                const clottingFactors = document.getElementById('clottingFactors');
+                
+                // Update subtitle based on step
+                if (step % 140 === 0) currentStep = 0;
+                else if (step % 140 === 20) currentStep = 1;
+                else if (step % 140 === 40) currentStep = 2;
+                else if (step % 140 === 60) currentStep = 3;
+                else if (step % 140 === 80) currentStep = 4;
+                else if (step % 140 === 100) currentStep = 5;
+                else if (step % 140 === 120) currentStep = 6;
+                
+                updateSubtitle();
+                
+                const cycleStep = step % 140;
+                
+                if (cycleStep < 20) {
+                    // Phase 1: Vitamin K approaches VKOR
+                    const newX = 350 + (cycleStep * 3.5);
+                    vitK.querySelector('circle').setAttribute('cx', newX);
+                    vitK.classList.add('pulse');
+                    vkor.classList.add('glow');
+                } else if (cycleStep < 60) {
+                    // Phase 2-3: Warfarin approaches
+                    const progress = cycleStep - 20;
+                    const newX = 550 - (progress * 3);
+                    const points = `${newX},160 ${newX+20},140 ${newX+40},160 ${newX+20},180`;
+                    warfarin.querySelector('polygon').setAttribute('points', points);
+                    warfarin.classList.add('pulse');
+                } else if (cycleStep < 100) {
+                    // Phase 4-5: Warfarin blocks VKOR
+                    vkor.classList.add('shake');
+                    warfarin.classList.add('glow');
+                    vitK.classList.remove('pulse');
+                    
+                    // Vitamin K bounces back
+                    if (cycleStep > 80) {
+                        const bounceProgress = cycleStep - 80;
+                        const newX = 420 - (bounceProgress * 3.5);
+                        vitK.querySelector('circle').setAttribute('cx', newX);
+                        vitK.classList.add('shake');
+                    }
+                } else {
+                    // Phase 6-7: Clotting factors blocked, effect shown
+                    clottingFactors.classList.add('fade-pulse');
+                    const clotIndicator = document.getElementById('clotIndicator');
+                    if (clotIndicator) {
+                        clotIndicator.classList.add('pulse');
+                    }
+                }
+                
+                step++;
+                
+                if (step >= 140) {
+                    step = 0;
+                    resetPositions();
+                }
+            }, 120 / animationSpeed);
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            updateSubtitle();
+            setTimeout(startAnimations, 1000);
+        });
+    </script>
+</body>
+</html>
